@@ -1,0 +1,11 @@
+# data & media — jangan di-commit
+app/videos/
+app/events/
+app/events.jsonl
+app/models/
+*.mp4
+*.avi
+*.mov
+*.pdf
+*.pt
+__pycache__/

@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Surveillance Keselamatan Area</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--ink:#14181f;--mut:#5d6675;--line:#dfe3ea;--acc:#1f6feb;--ok:#1a8f4c;--warn:#c27a00;--bad:#d13438;--hi:#d13438;--mid:#e0a100;--lo:#2e9e5b;--chip:#eef1f6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1319;--panel:#171c24;--ink:#e8ecf2;--mut:#93a0b3;--line:#27303d;--acc:#4c8dff;--ok:#3fb97a;--warn:#e0a63a;--bad:#ff6b6e;--hi:#ff6b6e;--mid:#e0b43a;--lo:#3fb97a;--chip:#212936}}
+:root[data-theme="dark"]{--bg:#0f1319;--panel:#171c24;--ink:#e8ecf2;--mut:#93a0b3;--line:#27303d;--acc:#4c8dff;--ok:#3fb97a;--warn:#e0a63a;--bad:#ff6b6e;--hi:#ff6b6e;--mid:#e0b43a;--lo:#3fb97a;--chip:#212936}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:16px;margin:0;font-weight:650}
+header .sub{color:var(--mut);font-size:12px}
+.sp{flex:1}
+button,select{font:inherit;color:var(--ink);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.tabs{display:flex;gap:6px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;padding:12px 16px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.kpi span{color:var(--mut);font-size:12px}
+main{padding:0 16px 16px}
+.live{display:grid;grid-template-columns:260px minmax(0,1fr) 320px;gap:12px}
+@media(max-width:1100px){.live{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.card h2{font-size:13px;margin:0;padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.areas{max-height:620px;overflow:auto}
+.area{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer}
+.area:hover{background:var(--chip)}
+.area.sel{background:var(--chip);box-shadow:inset 3px 0 var(--acc)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.area .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{font-size:11px;padding:1px 7px;border-radius:99px;background:var(--bad);color:#fff;font-variant-numeric:tabular-nums}
+.badge.z{background:var(--chip);color:var(--mut)}
+canvas{display:block;width:100%;height:auto;background:#1b222c}
+.feedinfo{padding:10px 12px;display:grid;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--chip);border:1px solid var(--line)}
+.chip.miss{background:var(--bad);border-color:var(--bad);color:#fff}
+.log{max-height:620px;overflow:auto}
+.ev{padding:8px 12px;border-bottom:1px solid var(--line);display:grid;gap:2px}
+.ev .t{color:var(--mut);font-size:11px}
+.ev.ack{opacity:.5}
+.sev{font-weight:650}
+.sev.high{color:var(--hi)}.sev.med{color:var(--warn)}
+.ev button{justify-self:start;padding:1px 8px;font-size:12px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--mut);position:sticky;top:0;background:var(--panel)}
+.tw{overflow:auto;max-height:70vh}
+label.ck{display:inline-flex;align-items:center;gap:4px;margin:0 8px 4px 0;font-size:12px;white-space:nowrap}
+.note{color:var(--mut);font-size:12px;padding:8px 16px}
+.hide{display:none}
+.vidbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.vidbar input[type=file]{max-width:220px;font-size:12px}
+.vidbar .sub{color:var(--mut);font-size:12px}
+.stage{position:relative;background:#1b222c}
+.stage img{display:block;width:100%;height:auto}
+#zov{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.chip.unk{opacity:.55;border-style:dashed}
+.chip.okc{border-color:var(--ok)}
+.tag{font-size:10px;padding:0 5px;border-radius:4px;background:var(--chip);border:1px solid var(--line);margin-right:4px}
+.tag.ai{background:var(--acc);border-color:var(--acc);color:#fff}
+.ev img{width:100%;border-radius:6px;margin-top:4px;cursor:zoom-in}
+.be{font-size:12px;padding:3px 9px;border-radius:99px;border:1px solid var(--line);background:var(--chip)}
+.be.on{background:var(--ok);border-color:var(--ok);color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Surveillance Keselamatan Area</h1>
+  <div class="sub">Prototipe · deteksi AI (YOLO) dari file video + simulasi untuk area tanpa video</div></div>
+  <div class="sp"></div>
+  <span id="be" class="be" title="Server deteksi lokal (py -3 app/server.py)">Server AI: offline</span>
+  <button id="simbtn" class="on" title="Simulasi untuk area yang belum punya video">Simulasi: on</button>
+  <div class="tabs">
+    <button data-tab="live" class="on">Live</button>
+    <button data-tab="rules">Aturan APD</button>
+    <button data-tab="sum">Ringkasan area</button>
+  </div>
+  <select id="speed" title="Kecepatan simulasi"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select>
+  <button id="pause">Jeda</button>
+  <button id="csv">Ekspor CSV</button>
+  <button id="theme">Tema</button>
+</header>
+
+<section class="kpis">
+  <div class="kpi"><b id="k-comp">–</b><span>Kepatuhan APD (orang terdeteksi)</span></div>
+  <div class="kpi"><b id="k-ppl">0</b><span>Orang terpantau</span></div>
+  <div class="kpi"><b id="k-ppe">0</b><span>Pelanggaran APD</span></div>
+  <div class="kpi"><b id="k-int">0</b><span>Intrusi zona</span></div>
+  <div class="kpi"><b id="k-fk">0</b><span>Forklift terlalu dekat</span></div>
+  <div class="kpi"><b id="k-unsafe">0</b><span>Perilaku tidak aman</span></div>
+</section>
+
+<main>
+  <div id="tab-live" class="live">
+    <div class="card"><h2>25 area / kamera <span class="sub" style="font-weight:400;color:var(--mut)">(klik untuk lihat)</span></h2><div class="areas" id="areas"></div></div>
+    <div class="card">
+      <h2 id="feedtitle"></h2>
+      <div class="vidbar">
+        <input type="file" id="vf" accept="video/*" title="File video CCTV untuk area ini">
+        <button id="up">Unggah & deteksi</button>
+        <button id="stopv">Stop video</button>
+        <button id="zonebtn" title="Seret di atas video untuk menandai zona terlarang">Gambar zona</button>
+        <button id="zoneclr">Hapus zona</button>
+        <label class="ck" style="margin:0" title="Jika dicentang, orang yang terlalu dekat dengan kendaraan masuk ke alarm"><input type="checkbox" id="vachk"> Alarm orang dekat kendaraan</label>
+        <span id="vstat" class="sub"></span>
+      </div>
+      <div class="stage">
+        <canvas id="cv" width="800" height="450"></canvas>
+        <img id="vid" class="hide" alt="Stream deteksi AI">
+        <canvas id="zov" class="hide"></canvas>
+      </div>
+      <div class="feedinfo">
+        <div><div class="sub" style="color:var(--mut);font-size:12px">Bahaya area</div><div id="hz"></div></div>
+        <div><div class="sub" style="color:var(--mut);font-size:12px">APD wajib (merah = pelanggaran terdeteksi barusan · garis putus = tidak bisa dicek model AI)</div><div class="chips" id="req"></div></div>
+      </div>
+    </div>
+    <div class="card"><h2>Log kejadian <button id="ackall" style="margin-left:auto;padding:2px 8px;font-size:12px">Tandai semua selesai</button></h2><div class="log" id="log"></div></div>
+  </div>
+
+  <div id="tab-rules" class="hide card">
+    <div class="note">Centang APD yang wajib di tiap area. Perubahan langsung dipakai oleh simulasi deteksi. Isi awal adalah contoh; sesuaikan dengan peta zonasi lokasi.</div>
+    <div class="tw"><table id="rules"></table></div>
+  </div>
+
+  <div id="tab-sum" class="hide card">
+    <div class="note">Area, bahaya, tingkat risiko (Bebas / Sedang / Tinggi), dan APD di bawah adalah contoh. Ganti daftar AREAS di kode sesuai peta zonasi lokasi.</div>
+    <div class="tw"><table id="sum"></table></div>
+  </div>
+</main>
+
+<script>
+// ---------- Daftar area (CONTOH — ganti sesuai peta zonasi lokasi) ----------
+const PPE={seragam:'Seragam',masker:'Masker',sepatu:'Sepatu',boot:'Sepatu boot',helm:'Helm',earplug:'Earplug',sarung:'Sarung tangan',latex:'Sarung tangan latex',kacamata:'Kacamata',apron:'Apron',jaslab:'Jas lab',jaket:'Jaket cold room',kedok:'Kedok las',jashujan:'Jas hujan'};
+// r: 0 bebas, 1 sedang, 2 tinggi (asumsi) · fk: ada lalu lintas forklift
+const A=[
+[1,'Pos Keamanan',0,['Tersandung','Terpeleset'],['seragam','sepatu']],
+[2,'Kantor',0,['Tersandung'],['sepatu']],
+[3,'Laboratorium',1,['Bahan kimia','Panas oven'],['masker','sepatu','latex','jaslab','kacamata']],
+[4,'Area Penerimaan Bahan',1,['Kejatuhan benda','Debu'],['masker','boot','helm']],
+[5,'Gudang Bahan Baku',1,['Manual handling','Forklift','Debu'],['masker','sepatu','helm'],true],
+[6,'Area Mesin Produksi',2,['Mesin berputar','Kebisingan','Terjepit'],['masker','sepatu','earplug','helm','sarung']],
+[7,'Workshop',2,['Gerinda/las','Benda tajam','Gas'],['kacamata','kedok','sarung','apron','sepatu','helm']],
+[8,'Gudang Barang Jadi',1,['Kejatuhan dari ketinggian','Forklift'],['helm','sepatu'],true]
+].map(a=>({id:a[0],name:a[1],risk:a[2],hazards:a[3],req:new Set(a[4]),fk:!!a[5],viol:0,va:false}));
+const RC=['var(--lo)','var(--mid)','var(--hi)'], RN=['Bebas bahaya','Bahaya sedang','Bahaya tinggi'];
+
+// ---------- State ----------
+let sel=A[7], paused=false, speed=2, events=[], stats={ppl:0,ok:0,seen:0,ppe:0,int:0,fk:0,uns:0};
+const W=800,H=450, cv=document.getElementById('cv'), cx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+const sims={}; // per area
+function rnd(a,b){return a+Math.random()*(b-a)}
+function mkSim(a){
+  const s={people:[],fork:null,nextSpawn:0,zone:{x:W*0.58,y:H*0.18,w:W*0.3,h:H*0.38},last:{}};
+  if(a.fk) s.fork={x:rnd(100,700),y:rnd(280,400),vx:rnd(40,70)*(Math.random()<.5?-1:1),vy:0};
+  return s;
+}
+A.forEach(a=>sims[a.id]=mkSim(a));
+const checkable=a=>[...a.req];
+
+function spawn(a){
+  const s=sims[a.id], req=checkable(a);
+  // sebagian besar patuh, sebagian lupa 1 APD
+  const worn=new Set(req);
+  if(Math.random()<0.28&&req.length){worn.delete(req[Math.floor(Math.random()*req.length)])}
+  const edge=Math.random()<.5;
+  s.people.push({id:Math.random().toString(36).slice(2,6).toUpperCase(),x:edge?-20:W+20,y:rnd(H*.45,H*.9),
+    vx:(edge?1:-1)*rnd(25,45),vy:rnd(-6,6),worn,auth:Math.random()>0.18,seen:0,life:rnd(14,30),fallen:0,flag:{},sc:0});
+}
+function log(a,type,sev,msg){
+  a.viol++;
+  events.unshift({t:new Date(),a:a.id,type,sev,msg,ack:false,src:'SIM'});
+  if(events.length>300)events.pop();
+  renderLog();renderAreas();
+}
+function step(dt){
+  for(const a of A){
+    const s=sims[a.id];
+    if(!simOn||live[a.id]){s.people=[];continue}
+    s.nextSpawn-=dt;
+    if(s.nextSpawn<=0&&s.people.length<5){spawn(a);s.nextSpawn=rnd(2,6)}
+    if(s.fork){const f=s.fork;f.x+=f.vx*dt;if(f.x<60||f.x>W-60)f.vx*=-1}
+    for(let i=s.people.length-1;i>=0;i--){
+      const p=s.people[i];
+      if(p.fallen>0){p.fallen-=dt;if(p.fallen<=0)p.vx=(Math.random()<.5?-1:1)*rnd(25,40)}
+      else{p.x+=p.vx*dt;p.y+=p.vy*dt}
+      p.seen+=dt;p.life-=dt;
+      if(p.x<-40||p.x>W+40||p.life<0){s.people.splice(i,1);continue}
+      const onscreen=p.x>20&&p.x<W-20;
+      if(!onscreen)continue;
+      // APD
+      const miss=[...a.req].filter(k=>!p.worn.has(k));
+      p.miss=miss;
+      if(miss.length&&p.seen>1.2&&!p.flag.ppe){p.flag.ppe=1;stats.ppe++;log(a,'APD','med',`Orang #${p.id} tanpa ${miss.map(k=>PPE[k]).join(', ')}`);s.last[miss[0]]=performance.now()}
+      // Intrusi zona (area risiko sedang/tinggi punya zona terlarang di kanan atas)
+      const z=s.zone, inz=a.risk>0&&p.x>z.x&&p.x<z.x+z.w&&p.y>z.y&&p.y<z.y+z.h;
+      p.inz=inz;
+      if(inz&&!p.auth&&!p.flag.int){p.flag.int=1;stats.int++;log(a,'Intrusi zona','high',`Orang #${p.id} tak berizin masuk zona terlarang`)}
+      // Forklift
+      p.near=false;if(s.fork&&a.va){const d=Math.hypot(p.x-s.fork.x,p.y-s.fork.y);p.near=d<110;
+        if(d<110&&!p.flag.fk){p.flag.fk=1;stats.fk++;log(a,'Forklift','high',`Jarak forklift ke orang #${p.id}: ${Math.round(d/8)} m (batas 14 m)`)}
+        if(d>=160)p.flag.fk=0}
+      // Terjatuh (perilaku tidak aman), lebih sering di area licin
+      if(!p.fallen&&!p.flag.fall&&Math.random()<dt*0.004*(a.hazards.join().match(/licin|Terpeleset|Tersandung|tidak rata/)?3:1)){
+        p.fallen=6;p.vx=0;p.flag.fall=1;stats.uns++;log(a,'Perilaku tidak aman','high',`Orang #${p.id} terjatuh / tidak bergerak`)}
+    }
+  }
+}
+// ---------- Render kanvas ----------
+function drawPerson(p,a){
+  const bad=(p.miss&&p.miss.length)||(p.inz&&!p.auth)||p.fallen>0||p.near;
+  const col=bad?'#ff4d4f':'#2fd47a';
+  cx.save();cx.translate(p.x,p.y);
+  if(p.fallen>0){cx.rotate(Math.PI/2);cx.translate(-20,0)}
+  const w=a.req;
+  cx.fillStyle=p.worn.has('seragam')?'#3a6ea5':'#8a8f98';cx.fillRect(-9,-30,18,30);
+  if(p.worn.has('apron')){cx.fillStyle='#d9d3c3';cx.fillRect(-7,-26,14,24)}
+  if(p.worn.has('jaket')){cx.fillStyle='#1f6feb';cx.fillRect(-10,-31,20,20)}
+  if(p.worn.has('jashujan')){cx.fillStyle='#e8c200';cx.fillRect(-10,-31,20,31)}
+  if(p.worn.has('jaslab')){cx.fillStyle='#f2f2f2';cx.fillRect(-10,-31,20,28)}
+  cx.fillStyle='#e0b48f';cx.beginPath();cx.arc(0,-40,8,0,7);cx.fill();
+  if(p.worn.has('helm')){cx.fillStyle='#ffd21f';cx.beginPath();cx.arc(0,-42,9,Math.PI,0);cx.fill();cx.fillRect(-11,-43,22,3)}
+  if(p.worn.has('masker')){cx.fillStyle='#9fd3ff';cx.fillRect(-6,-39,12,6)}
+  if(p.worn.has('kacamata')||p.worn.has('kedok')){cx.fillStyle='rgba(120,220,255,.8)';cx.fillRect(-7,-44,14,4)}
+  if(p.worn.has('earplug')){cx.fillStyle='#ff8a00';cx.fillRect(-10,-41,3,4);cx.fillRect(7,-41,3,4)}
+  if(p.worn.has('sarung')||p.worn.has('latex')){cx.fillStyle=p.worn.has('latex')?'#7dd3fc':'#444';cx.fillRect(-13,-14,5,6);cx.fillRect(8,-14,5,6)}
+  cx.fillStyle=(p.worn.has('boot'))?'#2b2b2b':(p.worn.has('sepatu')?'#4a3a2a':'#e0b48f');cx.fillRect(-9,0,8,6);cx.fillRect(1,0,8,6);
+  cx.restore();
+  cx.strokeStyle=col;cx.lineWidth=2;cx.strokeRect(p.x-18,p.y-56,36,64);
+  cx.fillStyle=col;cx.font='bold 11px system-ui';
+  const lbl='#'+p.id+(p.fallen>0?' JATUH':(p.miss&&p.miss.length?' -'+PPE[p.miss[0]]:' OK'));
+  const tw=cx.measureText(lbl).width+6;cx.fillRect(p.x-18,p.y-70,tw,14);cx.fillStyle='#0b0f14';cx.fillText(lbl,p.x-15,p.y-59);
+}
+function draw(){
+  const a=sel,s=sims[a.id];
+  if(live[a.id])return;
+  cx.fillStyle='#1b222c';cx.fillRect(0,0,W,H);
+  if(!simOn){cx.fillStyle='#93a0b3';cx.font='16px system-ui';cx.textAlign='center';
+    cx.fillText(`CAM-${String(a.id).padStart(2,'0')} · ${a.name}: belum ada video`,W/2,H/2-10);
+    cx.font='13px system-ui';cx.fillText(backend?'Pilih file video lalu klik "Unggah & deteksi"':'Jalankan server AI dulu: py -3 app/server.py',W/2,H/2+16);cx.textAlign='left';return}
+  // lantai
+  cx.fillStyle='#232c38';cx.fillRect(0,H*.38,W,H*.62);
+  cx.strokeStyle='#2c3746';cx.lineWidth=1;for(let x=0;x<W;x+=50){cx.beginPath();cx.moveTo(x,H*.38);cx.lineTo(x,H);cx.stroke()}
+  // zona terlarang
+  if(a.risk>0){const z=s.zone;cx.fillStyle='rgba(255,77,79,.14)';cx.fillRect(z.x,z.y,z.w,z.h);cx.setLineDash([8,6]);cx.strokeStyle='#ff4d4f';cx.lineWidth=2;cx.strokeRect(z.x,z.y,z.w,z.h);cx.setLineDash([]);cx.fillStyle='#ff8a8c';cx.font='12px system-ui';cx.fillText('ZONA TERLARANG (hanya berizin)',z.x+8,z.y+18)}
+  // forklift
+  if(s.fork){const f=s.fork;cx.fillStyle='#f0a500';cx.fillRect(f.x-26,f.y-22,52,26);cx.fillStyle='#222';cx.fillRect(f.x+(f.vx>0?26:-34),f.y-30,8,34);cx.fillRect(f.x-20,f.y+4,10,8);cx.fillRect(f.x+10,f.y+4,10,8);
+    cx.strokeStyle='rgba(240,165,0,.5)';cx.setLineDash([4,4]);cx.beginPath();cx.arc(f.x,f.y-8,110,0,7);cx.stroke();cx.setLineDash([]);cx.fillStyle='#f0a500';cx.font='11px system-ui';cx.fillText('FORKLIFT',f.x-26,f.y-34)}
+  [...s.people].sort((p,q)=>p.y-q.y).forEach(p=>drawPerson(p,a));
+  // HUD
+  cx.fillStyle='rgba(0,0,0,.55)';cx.fillRect(0,0,W,26);cx.fillStyle='#fff';cx.font='12px ui-monospace,monospace';
+  cx.fillText(`CAM-${String(a.id).padStart(2,'0')}  ${a.name.toUpperCase()}   ${new Date().toLocaleTimeString('id-ID')}   SIMULASI`,10,17);
+  cx.fillStyle='#ff4d4f';cx.beginPath();cx.arc(W-18,13,5,0,7);cx.fill();
+}
+// ---------- UI ----------
+function renderAreas(){
+  $('areas').innerHTML=A.map(a=>`<div class="area ${a===sel?'sel':''}" data-id="${a.id}"><span class="dot" style="background:${RC[a.risk]}"></span><span class="n">${a.id}. ${a.name}</span><span class="badge ${a.viol?'':'z'}">${a.viol}</span></div>`).join('');
+}
+function renderFeed(){
+  $('feedtitle').innerHTML=`CAM-${String(sel.id).padStart(2,'0')} · ${sel.name} <span class="chip">${RN[sel.risk]}</span>${sel.fk?' <span class="chip">Lalu lintas forklift</span>':''}`;
+  $('hz').textContent=sel.hazards.join(' · ');
+  const s=sims[sel.id], now=performance.now(), st=live[sel.id];
+  const isMiss=k=>st?(st.missing_now||[]).includes(AIMAP[k]):(s.last[k]&&now-s.last[k]<6000);
+  const cls=k=>isMiss(k)?'miss':(st&&!AIMAP[k]?'unk':'');
+  $('req').innerHTML=sel.req.size?[...sel.req].map(k=>`<span class="chip ${cls(k)}">${PPE[k]}</span>`).join(''):'<span class="chip">Tidak ada APD khusus</span>';
+  // tampilan video AI vs simulasi
+  const vid=$('vid');
+  if(st){
+    $('cv').classList.add('hide');vid.classList.remove('hide');
+    if(vid.dataset.area!=String(sel.id)){vid.dataset.area=sel.id;vid.src=`${API}/api/stream/${sel.id}?t=${Date.now()}`}
+    $('vstat').textContent=st.state==='error'?`Error: ${st.error}`:`${st.file} · ${st.state} · ${st.fps} fps ${st.device||''} ·${st.persons} orang, ${st.compliant} patuh`;
+  }else{
+    $('cv').classList.remove('hide');vid.classList.add('hide');
+    if(vid.dataset.area){vid.removeAttribute('src');delete vid.dataset.area}
+    $('vstat').textContent=backend?'Area ini belum ada video (tampilan simulasi)':'Server AI offline: jalankan py -3 app/server.py';
+  }
+  $('zonebtn').disabled=$('zoneclr').disabled=!st;
+  $('vachk').checked=sel.va;
+  $('up').disabled=!backend;$('stopv').disabled=!st;
+}
+function renderLog(){
+  const open=events.filter(e=>!e.ack).length;
+  $('log').innerHTML=events.length?events.slice(0,80).map((e,i)=>`<div class="ev ${e.ack?'ack':''}"><div class="t"><span class="tag ${e.src==='AI'?'ai':''}">${e.src}</span>${e.t.toLocaleTimeString('id-ID')} · Area ${e.a} ${A[e.a-1].name}</div><div><span class="sev ${e.sev}">${e.type}</span> — ${e.msg}</div>${e.snap?`<a href="${API}/api/snap/${e.snap}" target="_blank" rel="noopener"><img loading="lazy" src="${API}/api/snap/${e.snap}" alt="Foto bukti"></a>`:''}${e.ack?'':`<button data-i="${i}">Selesai</button>`}</div>`).join(''):'<div class="ev"><div class="t">Belum ada kejadian…</div></div>';
+}
+function renderKpi(){
+  let ppl=0,ok=0;for(const a of A)for(const p of sims[a.id].people){if(p.x>20&&p.x<W-20){ppl++;if(!(p.miss&&p.miss.length))ok++}}
+  for(const st of Object.values(live)){ppl+=st.persons||0;ok+=st.compliant||0}
+  $('k-ppl').textContent=ppl;$('k-comp').textContent=ppl?Math.round(ok/ppl*100)+'%':'–';
+  $('k-ppe').textContent=stats.ppe;$('k-int').textContent=stats.int;$('k-fk').textContent=stats.fk;$('k-unsafe').textContent=stats.uns;
+}
+function renderRules(){
+  const ids=Object.keys(PPE);
+  $('rules').innerHTML='<tr><th>No</th><th>Area</th><th>Alarm kendaraan</th><th>APD wajib</th></tr>'+A.map(a=>`<tr><td>${a.id}</td><td>${a.name}</td><td><label class="ck"><input type="checkbox" data-a="${a.id}" data-va="1" ${a.va?'checked':''}>Aktif</label></td><td>${ids.map(k=>`<label class="ck"><input type="checkbox" data-a="${a.id}" data-k="${k}" ${a.req.has(k)?'checked':''}>${PPE[k]}</label>`).join('')}</td></tr>`).join('');
+}
+function renderSum(){
+  $('sum').innerHTML='<tr><th>No</th><th>Area</th><th>Risiko (asumsi)</th><th>Bahaya</th><th>APD wajib</th><th>Kejadian</th></tr>'+A.map(a=>`<tr><td>${a.id}</td><td>${a.name}</td><td><span class="dot" style="display:inline-block;background:${RC[a.risk]}"></span> ${RN[a.risk]}</td><td>${a.hazards.join('; ')}</td><td>${[...a.req].map(k=>PPE[k]).join(', ')||'–'}</td><td>${a.viol}</td></tr>`).join('');
+}
+// ---------- Events ----------
+$('areas').onclick=e=>{const r=e.target.closest('.area');if(!r)return;sel=A[r.dataset.id-1];renderAreas();renderFeed()};
+$('log').onclick=e=>{const b=e.target.closest('button');if(!b)return;events.slice(0,80)[b.dataset.i].ack=true;renderLog()};
+$('ackall').onclick=()=>{events.forEach(e=>e.ack=true);renderLog()};
+$('rules').onchange=e=>{const c=e.target;if(c.dataset.va){setVA(A[c.dataset.a-1],c.checked);return}if(!c.dataset.k)return;const a=A[c.dataset.a-1];c.checked?a.req.add(c.dataset.k):a.req.delete(c.dataset.k);
+  sims[a.id].people.forEach(p=>{p.flag.ppe=0;p.seen=0});pushRules([a]);renderFeed()};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));
+  ['live','rules','sum'].forEach(t=>$('tab-'+t).classList.toggle('hide',t!==b.dataset.tab));
+  if(b.dataset.tab==='sum')renderSum();});
+$('speed').onchange=e=>speed=+e.target.value;
+$('pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Lanjut':'Jeda';e.target.classList.toggle('on',paused)};
+$('theme').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()==='#0f1319';r.dataset.theme=d?'light':'dark'};
+$('csv').onclick=()=>{
+  const rows=[['waktu','sumber','area_no','area','jenis','severity','keterangan','foto_bukti','selesai'],...events.map(e=>[e.t.toISOString(),e.src,e.a,A[e.a-1].name,e.type,e.sev,e.msg,e.snap||'',e.ack?'ya':'tidak'])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const u=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));const l=document.createElement('a');l.href=u;l.download='log-kejadian.csv';l.click();URL.revokeObjectURL(u)};
+
+// ---------- Server AI (app/server.py) ----------
+const API=(location.protocol.startsWith('http')&&location.port==='8000')?'':'http://127.0.0.1:8000';
+// APD dashboard -> item yang bisa dicek model AI (null = tidak bisa)
+const AIMAP={helm:'helm',masker:'masker',sarung:'sarung',latex:'sarung',kacamata:'kacamata',sepatu:'sepatu',boot:'sepatu'};
+let backend=false, live={}, lastEv=0, simOn=true, zones={};
+async function api(path,opt){const r=await fetch(API+path,opt);if(!r.ok)throw new Error((await r.text())||r.status);return r.json()}
+function pushRules(list){
+  if(!backend)return;
+  const body={};list.forEach(a=>body[a.id]={req:[...a.req],zone:zones[a.id]||null,name:a.name,vehicle_alarm:a.va});
+  api('/api/rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{});
+}
+const KIND={'APD':'ppe','Intrusi zona':'int','Forklift':'fk','Perilaku tidak aman':'uns'};
+async function poll(){
+  try{
+    const [st,evs]=await Promise.all([api('/api/status'),api('/api/events?since='+lastEv)]);
+    if(!backend){backend=true;pushRules(A)}
+    live={};for(const [k,v] of Object.entries(st))if(v.state!=='berhenti')live[k]=v;
+    for(const e of evs){
+      lastEv=Math.max(lastEv,e.id);
+      events.unshift({t:new Date(e.t*1000),a:e.area,type:e.type,sev:e.sev,msg:e.msg,ack:false,src:'AI',snap:e.snap});
+      A[e.area-1].viol++;stats[KIND[e.type]]++;
+    }
+    if(evs.length){renderLog();renderAreas()}
+  }catch(err){backend=false;live={}}
+  $('be').textContent=backend?`Server AI: online · ${Object.keys(live).length} video`:'Server AI: offline';
+  $('be').classList.toggle('on',backend);
+  renderFeed();
+}
+setInterval(poll,1000);poll();
+$('simbtn').onclick=e=>{simOn=!simOn;e.target.textContent='Simulasi: '+(simOn?'on':'off');e.target.classList.toggle('on',simOn)};
+$('up').onclick=async()=>{
+  const f=$('vf').files[0];if(!f){alert('Pilih file video dulu');return}
+  const fd=new FormData();fd.append('area',sel.id);fd.append('file',f);
+  $('vstat').textContent=`Mengunggah ${f.name}…`;$('up').disabled=true;
+  try{pushRules([sel]);await api('/api/upload',{method:'POST',body:fd});delete $('vid').dataset.area;await poll()}
+  catch(err){$('vstat').textContent='Gagal unggah: '+err.message}
+};
+function setVA(a,on){a.va=on;pushRules([a]);renderRules();renderFeed()}
+$('vachk').onchange=e=>setVA(sel,e.target.checked);
+$('stopv').onclick=async()=>{await api('/api/stop/'+sel.id,{method:'POST'}).catch(()=>{});await poll()};
+// gambar zona terlarang di atas video
+const zov=$('zov'),zc=zov.getContext('2d');let zdraw=null;
+$('zonebtn').onclick=()=>{const on=zov.classList.toggle('hide');$('zonebtn').classList.toggle('on',!on);
+  const r=$('vid').getBoundingClientRect();zov.width=r.width;zov.height=r.height;zc.clearRect(0,0,zov.width,zov.height)};
+$('zoneclr').onclick=()=>{delete zones[sel.id];pushRules([sel])};
+const zpos=e=>{const r=zov.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]};
+zov.onmousedown=e=>{zdraw=zpos(e)};
+zov.onmousemove=e=>{if(!zdraw)return;const p=zpos(e);zc.clearRect(0,0,zov.width,zov.height);zc.strokeStyle='#ff4d4f';zc.lineWidth=2;zc.fillStyle='rgba(255,77,79,.2)';
+  const x=Math.min(zdraw[0],p[0])*zov.width,y=Math.min(zdraw[1],p[1])*zov.height,w=Math.abs(p[0]-zdraw[0])*zov.width,h=Math.abs(p[1]-zdraw[1])*zov.height;zc.fillRect(x,y,w,h);zc.strokeRect(x,y,w,h)};
+zov.onmouseup=e=>{if(!zdraw)return;const p=zpos(e),z=[Math.min(zdraw[0],p[0]),Math.min(zdraw[1],p[1]),Math.abs(p[0]-zdraw[0]),Math.abs(p[1]-zdraw[1])];zdraw=null;
+  if(z[2]>0.02&&z[3]>0.02){zones[sel.id]=z.map(v=>Math.max(0,Math.min(1,v)));pushRules([sel])}
+  zov.classList.add('hide');$('zonebtn').classList.remove('on')};
+
+// ---------- Loop ----------
+let prev=performance.now(),acc=0;
+function frame(t){
+  const dt=Math.min(.1,(t-prev)/1000)*speed;prev=t;
+  if(!paused)step(dt);
+  draw();acc+=dt;if(acc>0.5||paused){acc=0;renderKpi();renderFeed()}
+  requestAnimationFrame(frame);
+}
+// warm start
+for(let i=0;i<40;i++)step(.25);
+A.forEach(a=>{a.viol=0});events=[];stats={ppl:0,ok:0,seen:0,ppe:0,int:0,fk:0,uns:0};
+renderAreas();renderFeed();renderLog();renderRules();renderSum();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
